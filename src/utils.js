@@ -14,3 +14,16 @@ export function splitFullName(fullName) {
 
 	return result;
 }
+
+export function removeFieldsWithUnderscore(dataArray) {
+	return dataArray.map((item) => {
+		const newObj = {};
+		Object.keys(item).forEach((key) => {
+			if (!key.startsWith("_")) {
+				newObj[key] = item[key];
+			}
+			if (key === "_id") newObj[key] = item[key];
+		});
+		return newObj;
+	});
+}
