@@ -1,0 +1,12 @@
+Map source & target fields ✅
+Spread data instead of adding new index 
+Dont allow to add same value multiple times
+Validate dropdown required field
+
+=================
+Fetch data from Kobotool
+Display in Source Column
+Display Dest i.e. DB Column
+Select dropdown form Dest. Column
+Stage (Check if submitted data is valid with Benf. Payload)
+Import to Benf. DB Model
