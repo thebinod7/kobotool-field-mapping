@@ -1,9 +1,14 @@
 import React, { Fragment, useState } from "react";
 import { KOBO_DATA } from "./data";
-import { removeFieldsWithUnderscore, splitFullName } from "./utils";
+import {
+	includeOnlySelectedTarget,
+	removeFieldsWithUnderscore,
+	splitFullName,
+} from "./utils";
 import "./App.css";
 
 const { results } = KOBO_DATA;
+const UNIQUE_ID = "_id";
 
 const TARGET_FIELD = {
 	FIRSTNAME_LASTNAME: "firstName_lastName",
@@ -31,23 +36,27 @@ const BENEF_DB_FIELDS = [
 
 const DynamicArrayRenderer = ({ dataArray }) => {
 	const [mappings, setMappings] = useState([]);
-	const [selectedFields, setSelectedFields] = useState([]);
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
 		let finalPayload = removeFieldsWithUnderscore(results);
+		const selectedTargets = [UNIQUE_ID]; // Only submit selected target fields
 
 		for (let m of mappings) {
 			if (m.targetField === TARGET_FIELD.FIRSTNAME_LASTNAME) {
 				// Split fullName, update target_key and delete old_source_key
+				selectedTargets.push("firstName");
+				selectedTargets.push("lastName");
 				const replaced = finalPayload.map((item) => {
 					const { firstName, lastName } = splitFullName(item[m.sourceField]);
 					const newItem = { ...item, firstName, lastName };
 					delete newItem[m.sourceField];
+
 					return newItem;
 				});
 				finalPayload = replaced;
 			} else {
+				selectedTargets.push(m.targetField);
 				// Update target_key and delete old_source_key
 				const replaced = finalPayload.map((item) => {
 					const newItem = { ...item, [m.targetField]: item[m.sourceField] };
@@ -57,21 +66,20 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				finalPayload = replaced;
 			}
 		}
-		return importToDB(finalPayload);
+		return importToDB(finalPayload, selectedTargets);
 	};
 
-	const importToDB = (payload) => {
-		console.log("Final==>", payload);
-		console.log("Selected=>", selectedFields);
+	const importToDB = (payload, selectedTargets) => {
+		console.log("selectedTargets=>", selectedTargets);
 		// Remove non-selected fields
+		const sanitized = includeOnlySelectedTarget(payload, selectedTargets);
+		console.log("Sanitized=>", sanitized);
 		// Display preview
 		// Sanitize payload against backend
 		// Import to DB
 	};
 
 	const handleTargetFieldChange = (sourceField, targetField) => {
-		const exist = selectedFields.includes(sourceField);
-		if (!exist) setSelectedFields([...selectedFields, sourceField]);
 		const index = mappings.findIndex(
 			(item) => item.sourceField === sourceField
 		);

@@ -27,3 +27,15 @@ export function removeFieldsWithUnderscore(dataArray) {
 		return newObj;
 	});
 }
+
+export const includeOnlySelectedTarget = (array, selectedTargets) => {
+	return array.map((item) => {
+		const extractedFields = {};
+		selectedTargets.forEach((key) => {
+			if (item.hasOwnProperty(key)) {
+				extractedFields[key] = item[key];
+			}
+		});
+		return extractedFields;
+	});
+};
