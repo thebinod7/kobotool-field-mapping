@@ -1,6 +1,9 @@
 import React, { Fragment, useState } from "react";
+import axios from "axios";
+
 import { KOBO_DATA } from "./data";
 import {
+	attachedRawData,
 	includeOnlySelectedTarget,
 	removeFieldsWithUnderscore,
 	splitFullName,
@@ -9,6 +12,7 @@ import "./App.css";
 
 const { results } = KOBO_DATA;
 const UNIQUE_ID = "_id";
+const API_URL = "http://localhost:5600/api/v1/beneficiaries/import";
 
 const TARGET_FIELD = {
 	FIRSTNAME_LASTNAME: "firstName_lastName",
@@ -69,13 +73,16 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 		return importToDB(finalPayload, selectedTargets);
 	};
 
-	const importToDB = (payload, selectedTargets) => {
+	const importToDB = async (payload, selectedTargets) => {
 		console.log("selectedTargets=>", selectedTargets);
 		// Remove non-selected fields
 		const sanitized = includeOnlySelectedTarget(payload, selectedTargets);
-		console.log("Sanitized=>", sanitized);
-		// Display preview
-		// Sanitize payload against backend
+		// Attach raw data
+		const attached = attachedRawData(sanitized, results);
+		console.log("Attached=>", attached);
+		// Validate payload against backend
+		const res = await axios.post(API_URL, attached);
+		console.log("RES==>", res.data);
 		// Import to DB
 	};
 
@@ -164,7 +171,6 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				<div className="right-side">
 					<h3>Schema Preview</h3>
 					<hr />
-					<pre>code snippet goes here...</pre>
 				</div>
 			</div>
 		</div>

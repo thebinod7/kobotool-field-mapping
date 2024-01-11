@@ -39,3 +39,15 @@ export const includeOnlySelectedTarget = (array, selectedTargets) => {
 		return extractedFields;
 	});
 };
+
+export const attachedRawData = (payload, rawDataSource) => {
+	let result = [];
+	for (let p of payload) {
+		const found = rawDataSource.find((f) => f._id === p._id);
+		if (found) {
+			const newItem = { ...p, rawData: found };
+			result.push(newItem);
+		}
+	}
+	return result;
+};

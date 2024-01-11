@@ -1,12 +1,14 @@
 Map source & target fields ✅
-Spread data instead of adding new index 
+Spread data instead of adding new index
 Dont allow to add same value multiple times
 Validate dropdown required field
 
 =================
-Fetch data from Kobotool
-Display in Source Column
-Display Dest i.e. DB Column
-Select dropdown form Dest. Column
-Stage (Check if submitted data is valid with Benf. Payload)
-Import to Benf. DB Model
+
+- Fetch data from Kobotool ✅
+- Display data in table ✅
+- Display target Column in dropdown ✅
+- Parse source into target columns ✅
+- Validate (Check if submitted data is valid with Benf. Payload)
+  - Validate key:value(dataType) against benef. schema
+- Import to Benf. DB Model
