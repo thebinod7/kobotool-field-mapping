@@ -5,7 +5,7 @@ import "./App.css";
 
 const { results } = KOBO_DATA;
 
-const TARGET_FIELDS = {
+const TARGET_FIELD = {
 	FIRSTNAME_LASTNAME: "firstName_lastName",
 	LOCATION: "location",
 	PHONE: "phone",
@@ -18,27 +18,28 @@ const TARGET_FIELDS = {
 };
 
 const BENEF_DB_FIELDS = [
-	TARGET_FIELDS.FIRSTNAME_LASTNAME,
-	TARGET_FIELDS.LOCATION,
-	TARGET_FIELDS.PHONE,
-	TARGET_FIELDS.EMAIL,
-	TARGET_FIELDS.GENDER,
-	TARGET_FIELDS.BIRTH_DATE,
-	TARGET_FIELDS.NOTES,
-	TARGET_FIELDS.LATITUDE,
-	TARGET_FIELDS.LONGITUDE,
+	TARGET_FIELD.FIRSTNAME_LASTNAME,
+	TARGET_FIELD.LOCATION,
+	TARGET_FIELD.PHONE,
+	TARGET_FIELD.EMAIL,
+	TARGET_FIELD.GENDER,
+	TARGET_FIELD.BIRTH_DATE,
+	TARGET_FIELD.NOTES,
+	TARGET_FIELD.LATITUDE,
+	TARGET_FIELD.LONGITUDE,
 ];
 
 const DynamicArrayRenderer = ({ dataArray }) => {
 	const [mappings, setMappings] = useState([]);
+	const [selectedFields, setSelectedFields] = useState([]);
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
 		let finalPayload = removeFieldsWithUnderscore(results);
 
 		for (let m of mappings) {
-			if (m.targetField === TARGET_FIELDS.FIRSTNAME_LASTNAME) {
-				// Split fullName, update target_key and delete old_key
+			if (m.targetField === TARGET_FIELD.FIRSTNAME_LASTNAME) {
+				// Split fullName, update target_key and delete old_source_key
 				const replaced = finalPayload.map((item) => {
 					const { firstName, lastName } = splitFullName(item[m.sourceField]);
 					const newItem = { ...item, firstName, lastName };
@@ -47,7 +48,7 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				});
 				finalPayload = replaced;
 			} else {
-				// Update target_key and delete old_key
+				// Update target_key and delete old_source_key
 				const replaced = finalPayload.map((item) => {
 					const newItem = { ...item, [m.targetField]: item[m.sourceField] };
 					delete newItem[m.sourceField];
@@ -56,10 +57,21 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				finalPayload = replaced;
 			}
 		}
-		console.log("FINAL==>", finalPayload);
+		return importToDB(finalPayload);
+	};
+
+	const importToDB = (payload) => {
+		console.log("Final==>", payload);
+		console.log("Selected=>", selectedFields);
+		// Remove non-selected fields
+		// Display preview
+		// Sanitize payload against backend
+		// Import to DB
 	};
 
 	const handleTargetFieldChange = (sourceField, targetField) => {
+		const exist = selectedFields.includes(sourceField);
+		if (!exist) setSelectedFields([...selectedFields, sourceField]);
 		const index = mappings.findIndex(
 			(item) => item.sourceField === sourceField
 		);
@@ -71,58 +83,82 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 	};
 	return (
 		<div>
-			<h3>=======Beneficiary List=========</h3>
-			<hr />
-			<table>
-				{dataArray.map((item, index) => {
-					const keys = Object.keys(item);
+			<div className="flex-container">
+				<div className="left-side">
+					<div id="table">
+						<h3>Beneficiary List</h3>
+						<hr />
+						<table>
+							{dataArray.map((item, index) => {
+								const keys = Object.keys(item);
 
-					return (
-						<Fragment key={index}>
-							<tbody>
-								<tr>
-									{/* Render key:value */}
-									{keys.map((key, i) => (
-										<td key={i + 1}>
+								return (
+									<Fragment key={index}>
+										<tbody>
 											{index === 0 && (
-												<select
-													name="targetField"
-													id="targetField"
-													onChange={(e) =>
-														handleTargetFieldChange(key, e.target.value)
-													}
-												>
-													<option value="None">--Choose Target--</option>
-													{BENEF_DB_FIELDS.map((f) => {
+												<tr>
+													{keys.map((key, i) => {
 														return (
-															<option key={f} value={f}>
-																{f}
-															</option>
+															<td key={i + 1}>
+																<strong>{key.toLocaleUpperCase()}</strong>{" "}
+																<br />
+																<select
+																	name="targetField"
+																	id="targetField"
+																	onChange={(e) =>
+																		handleTargetFieldChange(key, e.target.value)
+																	}
+																>
+																	<option value="None">
+																		--Choose Target--
+																	</option>
+																	{BENEF_DB_FIELDS.map((f) => {
+																		return (
+																			<option key={f} value={f}>
+																				{f}
+																			</option>
+																		);
+																	})}
+																</select>
+															</td>
 														);
 													})}
-												</select>
+												</tr>
 											)}
 
-											{index === 0 ? <strong>{key}:</strong> : ""}
-											{typeof item[key] === "object" ? (
-												// Render nested objects
-												<NestedObjectRenderer object={item[key]} />
-											) : (
-												// Render simple values
-												item[key]
-											)}
-										</td>
-									))}
-								</tr>
-							</tbody>
-						</Fragment>
-					);
-				})}
-			</table>
-
-			<button type="button" onClick={handleSubmit}>
-				Submit
-			</button>
+											<tr>
+												{/* Render key:value */}
+												{keys.map((key, i) => (
+													<td key={i + 1}>
+														{typeof item[key] === "object" ? (
+															// Render nested objects
+															<NestedObjectRenderer object={item[key]} />
+														) : (
+															// Render simple values
+															item[key]
+														)}
+													</td>
+												))}
+											</tr>
+										</tbody>
+									</Fragment>
+								);
+							})}
+						</table>
+						<br />
+						<button type="button" onClick={handleSubmit}>
+							Submit
+						</button>{" "}
+						&nbsp;
+						<button type="button">Preview</button>
+					</div>
+				</div>
+				<div className="right-side">
+					<h3>Schema Preview</h3>
+					<hr />
+					<pre>code snippet goes here...</pre>
+				</div>
+			</div>
 		</div>
 	);
 };

@@ -1,7 +1,6 @@
 table {
 	font-family: arial, sans-serif;
 	border-collapse: collapse;
-	width: 100%;
 }
 
 td,
@@ -13,4 +12,21 @@ th {
 
 tr:nth-child(even) {
 	background-color: #dddddd;
+}
+.flex-container {
+	display: flex;
+}
+
+.left-side {
+	flex: 0 0 80%;
+	padding: 10px;
+}
+
+.right-side {
+	flex: 0 0 20%;
+	padding: 10px;
+}
+
+body {
+	overflow-x: hidden;
 }
