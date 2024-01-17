@@ -103,6 +103,35 @@ export const KOBO_DATA = {
 	],
 };
 
+export const TARGET_FIELD = {
+	FIRSTNAME_LASTNAME: "firstName_lastName",
+	LOCATION: "location",
+	PHONE: "phone",
+	EMAIL: "email",
+	GENDER: "gender",
+	BIRTH_DATE: "birthDate",
+	NOTES: "notes",
+	LATITUDE: "latitude",
+	LONGITUDE: "longitude",
+};
+
+export const BENEF_DB_FIELDS = [
+	TARGET_FIELD.FIRSTNAME_LASTNAME,
+	TARGET_FIELD.LOCATION,
+	TARGET_FIELD.PHONE,
+	TARGET_FIELD.EMAIL,
+	TARGET_FIELD.GENDER,
+	TARGET_FIELD.BIRTH_DATE,
+	TARGET_FIELD.NOTES,
+	TARGET_FIELD.LATITUDE,
+	TARGET_FIELD.LONGITUDE,
+];
+
+export const IMPORT_SOURCE = {
+	KOBOTOOL: "Kobotool",
+	EXCEL: "Excel",
+};
+
 export const FORM_FIELDS = [
 	{
 		id: 1,
