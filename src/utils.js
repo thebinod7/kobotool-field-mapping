@@ -16,6 +16,7 @@ export function splitFullName(fullName) {
 }
 
 export function removeFieldsWithUnderscore(dataArray) {
+	console.log("Data==>", dataArray);
 	return dataArray.map((item) => {
 		const newObj = {};
 		Object.keys(item).forEach((key) => {

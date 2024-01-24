@@ -15,6 +15,7 @@ import {
 } from "./utils";
 import "./App.css";
 import ImportBenef from "./screens/ImportBenef";
+import ExcelUploader from "./ExcelUploader";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -28,28 +29,31 @@ const { results } = KOBO_DATA;
 const DynamicArrayRenderer = ({ dataArray }) => {
 	const [mappings, setMappings] = useState([]);
 	const [currentScreen, setCurrentScreen] = useState(SCREENS.HOME);
+	const [excelData, setExcelData] = useState([]);
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		let finalPayload = removeFieldsWithUnderscore(results);
+		let finalPayload = removeFieldsWithUnderscore(excelData);
 		const selectedTargets = []; // Only submit selected target fields
+
+		console.log("F==>", finalPayload);
 
 		for (let m of mappings) {
 			if (m.targetField === TARGET_FIELD.FIRSTNAME) {
 				selectedTargets.push(TARGET_FIELD.FIRSTNAME);
 				const replaced = finalPayload.map((item) => {
-					const { firstName } = splitFullName(item[m.sourceField]);
+					const firstName = item[m.sourceField];
 					const newItem = { ...item, firstName };
-					delete newItem[m.sourceField];
+					if (m.sourceField !== m.targetField) delete newItem[m.sourceField];
 					return newItem;
 				});
 				finalPayload = replaced;
 			} else if (m.targetField === TARGET_FIELD.LASTNAME) {
 				selectedTargets.push(TARGET_FIELD.LASTNAME);
 				const replaced = finalPayload.map((item) => {
-					const { lastName } = splitFullName(item[m.sourceField]);
+					const lastName = item[m.sourceField];
 					const newItem = { ...item, lastName };
-					delete newItem[m.sourceField];
+					if (m.sourceField !== m.targetField) delete newItem[m.sourceField];
 					return newItem;
 				});
 				finalPayload = replaced;
@@ -60,8 +64,7 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				const replaced = finalPayload.map((item) => {
 					const { firstName, lastName } = splitFullName(item[m.sourceField]);
 					const newItem = { ...item, firstName, lastName };
-					delete newItem[m.sourceField];
-
+					if (m.sourceField !== m.targetField) delete newItem[m.sourceField];
 					return newItem;
 				});
 				finalPayload = replaced;
@@ -70,7 +73,7 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				// Update target_key:value and delete old_source_key
 				const replaced = finalPayload.map((item) => {
 					const newItem = { ...item, [m.targetField]: item[m.sourceField] };
-					delete newItem[m.sourceField];
+					if (m.sourceField !== m.targetField) delete newItem[m.sourceField];
 					return newItem;
 				});
 				finalPayload = replaced;
@@ -85,12 +88,13 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 			// const omitID = selectedTargets.filter((f) => f !== UNIQUE_ID);
 			if (!selectedTargets.length) return alert("Please select target fields!");
 			// Remove non-selected fields
+			console.log("Paylaod==>", payload);
 			const selectedFieldsOnly = includeOnlySelectedTarget(
 				payload,
 				selectedTargets
 			);
 			// Attach raw data
-			const final_mapping = attachedRawData(selectedFieldsOnly, results);
+			const final_mapping = attachedRawData(selectedFieldsOnly, excelData);
 			console.log("final_mapping=>", final_mapping);
 			// Validate payload against backend
 			const sourcePayload = {
@@ -117,6 +121,21 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 			setMappings([...mappings, { sourceField, targetField }]);
 		}
 	};
+
+	const handleExcelFileUpload = async (file) => {
+		if (!file) return alert("Please select file!");
+		const formData = new FormData();
+		formData.append("file", file);
+		const uploaded = await axios.post(
+			`${API_URL}/beneficiaries/upload`,
+			formData
+		);
+		const { data } = uploaded.data;
+		setExcelData(data);
+	};
+
+	console.log("mappings=>", mappings);
+
 	return (
 		<div>
 			{currentScreen === SCREENS.IMPORT_BENEF && <ImportBenef />}
@@ -124,8 +143,9 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				<>
 					<h3>Beneficiary List</h3>
 					<hr />
+					<ExcelUploader onFileUpload={handleExcelFileUpload} />
 					<table>
-						{dataArray.map((item, index) => {
+						{excelData.map((item, index) => {
 							const keys = Object.keys(item);
 
 							return (
@@ -191,7 +211,6 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 
 const NestedObjectRenderer = ({ object }) => {
 	const keys = Object.keys(object);
-
 	return (
 		<ul>
 			{keys.map((key, i) => (
@@ -204,7 +223,9 @@ const NestedObjectRenderer = ({ object }) => {
 };
 
 const MyComponent = () => {
-	const myArray = removeFieldsWithUnderscore(results);
+	const [benefList, setBenefList] = useState(results);
+
+	const myArray = removeFieldsWithUnderscore(benefList);
 
 	return <DynamicArrayRenderer dataArray={myArray} />;
 };
