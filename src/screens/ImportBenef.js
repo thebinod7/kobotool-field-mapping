@@ -9,10 +9,12 @@ function ImportBenef() {
 	const handleImortClick = async (uuid) => {
 		console.log({ uuid });
 		try {
-			const res = await axios.get(`${API_URL}/beneficiaries/${uuid}/import`);
-			return res.data;
+			const res = await axios.get(
+				`${API_URL}/beneficiary-imports/${uuid}/import`
+			);
+			alert(res.data.data.message);
 		} catch (err) {
-			console.log("Err=>", err);
+			alert(err.response.data.message);
 		}
 	};
 
@@ -20,7 +22,7 @@ function ImportBenef() {
 		async function fetchSources() {
 			const res = await axios.get(`${API_URL}/sources`);
 			const { data } = res;
-			setSources(data.rows);
+			setSources(data.data.rows);
 		}
 
 		fetchSources();

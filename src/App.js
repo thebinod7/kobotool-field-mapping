@@ -16,7 +16,6 @@ import {
 import "./App.css";
 import ImportBenef from "./screens/ImportBenef";
 
-const UNIQUE_ID = "_id";
 const API_URL = process.env.REACT_APP_API_URL;
 
 const SCREENS = {
@@ -33,11 +32,12 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 	const handleSubmit = (e) => {
 		e.preventDefault();
 		let finalPayload = removeFieldsWithUnderscore(results);
-		const selectedTargets = [UNIQUE_ID]; // Only submit selected target fields
+		const selectedTargets = []; // Only submit selected target fields
+		console.log("Mappings=>", mappings);
 
 		for (let m of mappings) {
 			if (m.targetField === TARGET_FIELD.FIRSTNAME_LASTNAME) {
-				// Split fullName, update target_key and delete old_source_key
+				// Split fullName, update target_key:value and delete old_source_key
 				selectedTargets.push("firstName");
 				selectedTargets.push("lastName");
 				const replaced = finalPayload.map((item) => {
@@ -50,7 +50,7 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				finalPayload = replaced;
 			} else {
 				selectedTargets.push(m.targetField);
-				// Update target_key and delete old_source_key
+				// Update target_key:value and delete old_source_key
 				const replaced = finalPayload.map((item) => {
 					const newItem = { ...item, [m.targetField]: item[m.sourceField] };
 					delete newItem[m.sourceField];
@@ -64,19 +64,21 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 
 	const importToSource = async (payload, selectedTargets) => {
 		try {
-			const omitID = selectedTargets.filter((f) => f !== UNIQUE_ID);
-			if (!omitID.length) return alert("Please select target fields!");
-			console.log("selectedTargets=>", selectedTargets);
+			// const omitID = selectedTargets.filter((f) => f !== UNIQUE_ID);
+			if (!selectedTargets.length) return alert("Please select target fields!");
 			// Remove non-selected fields
-			const sanitized = includeOnlySelectedTarget(payload, selectedTargets);
+			const selectedFieldsOnly = includeOnlySelectedTarget(
+				payload,
+				selectedTargets
+			);
 			// Attach raw data
-			const attached = attachedRawData(sanitized, results);
-			console.log("Attached=>", attached);
+			const final_mapping = attachedRawData(selectedFieldsOnly, results);
+			console.log("final_mapping=>", final_mapping);
 			// Validate payload against backend
 			const sourcePayload = {
 				name: IMPORT_SOURCE.KOBOTOOL,
 				details: { message: "This is just a test" },
-				field_mapping: { data: attached },
+				field_mapping: { data: final_mapping },
 			};
 			await axios.post(`${API_URL}/sources`, sourcePayload);
 			setCurrentScreen(SCREENS.IMPORT_BENEF);
