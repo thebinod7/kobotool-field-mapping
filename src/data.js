@@ -104,7 +104,9 @@ export const KOBO_DATA = {
 };
 
 export const TARGET_FIELD = {
-	FIRSTNAME_LASTNAME: "firstName_lastName",
+	FULL_NAME: "fullName",
+	FIRSTNAME: "firstName",
+	LASTNAME: "lastName",
 	LOCATION: "location",
 	PHONE: "phone",
 	EMAIL: "email",
@@ -116,7 +118,9 @@ export const TARGET_FIELD = {
 };
 
 export const BENEF_DB_FIELDS = [
-	TARGET_FIELD.FIRSTNAME_LASTNAME,
+	TARGET_FIELD.FULL_NAME,
+	TARGET_FIELD.FIRSTNAME,
+	TARGET_FIELD.LASTNAME,
 	TARGET_FIELD.LOCATION,
 	TARGET_FIELD.PHONE,
 	TARGET_FIELD.EMAIL,

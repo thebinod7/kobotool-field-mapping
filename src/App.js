@@ -33,13 +33,30 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 		e.preventDefault();
 		let finalPayload = removeFieldsWithUnderscore(results);
 		const selectedTargets = []; // Only submit selected target fields
-		console.log("Mappings=>", mappings);
 
 		for (let m of mappings) {
-			if (m.targetField === TARGET_FIELD.FIRSTNAME_LASTNAME) {
+			if (m.targetField === TARGET_FIELD.FIRSTNAME) {
+				selectedTargets.push(TARGET_FIELD.FIRSTNAME);
+				const replaced = finalPayload.map((item) => {
+					const { firstName } = splitFullName(item[m.sourceField]);
+					const newItem = { ...item, firstName };
+					delete newItem[m.sourceField];
+					return newItem;
+				});
+				finalPayload = replaced;
+			} else if (m.targetField === TARGET_FIELD.LASTNAME) {
+				selectedTargets.push(TARGET_FIELD.LASTNAME);
+				const replaced = finalPayload.map((item) => {
+					const { lastName } = splitFullName(item[m.sourceField]);
+					const newItem = { ...item, lastName };
+					delete newItem[m.sourceField];
+					return newItem;
+				});
+				finalPayload = replaced;
+			} else if (m.targetField === TARGET_FIELD.FULL_NAME) {
 				// Split fullName, update target_key:value and delete old_source_key
-				selectedTargets.push("firstName");
-				selectedTargets.push("lastName");
+				selectedTargets.push(TARGET_FIELD.FIRSTNAME);
+				selectedTargets.push(TARGET_FIELD.LASTNAME);
 				const replaced = finalPayload.map((item) => {
 					const { firstName, lastName } = splitFullName(item[m.sourceField]);
 					const newItem = { ...item, firstName, lastName };
@@ -59,6 +76,7 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				finalPayload = replaced;
 			}
 		}
+		console.log("Final=>", finalPayload);
 		return importToSource(finalPayload, selectedTargets);
 	};
 
