@@ -30,3 +30,6 @@ tr:nth-child(even) {
 /* body {
 	overflow-x: hidden;
 } */
+a {
+	text-decoration: none;
+}

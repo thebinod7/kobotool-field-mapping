@@ -5,7 +5,7 @@ import {
 	KOBO_DATA,
 	TARGET_FIELD,
 	BENEF_DB_FIELDS,
-	IMPORT_SOURCE,
+	IMPORT_OPTIONS,
 } from "./data";
 import {
 	attachedRawData,
@@ -15,28 +15,64 @@ import {
 } from "./utils";
 import "./App.css";
 import ImportBenef from "./screens/ImportBenef";
-import ExcelUploader from "./ExcelUploader";
+import ExcelUploader from "./components/ExcelUploader";
+import SelectDropdown from "./components/SelectDropdown";
+import NestedObjectRenderer from "./components/NestedObjectRenderer";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
 const SCREENS = {
-	HOME: "Home",
+	IMPORT_SOURCE: "Import Source",
 	IMPORT_BENEF: "Import Beneficiary",
 };
 
 const { results } = KOBO_DATA;
 
-const DynamicArrayRenderer = ({ dataArray }) => {
+const App = () => {
+	const [currenSource, setCurrentSource] = useState("");
+	const [rawData, setRawData] = useState([]);
 	const [mappings, setMappings] = useState([]);
-	const [currentScreen, setCurrentScreen] = useState(SCREENS.HOME);
-	const [excelData, setExcelData] = useState([]);
+	const [currentScreen, setCurrentScreen] = useState(SCREENS.IMPORT_SOURCE);
 
-	const handleSubmit = (e) => {
+	const handleSelectChange = (e) => {
+		setRawData([]);
+		const { value } = e.target;
+		if (value === IMPORT_OPTIONS.KOBOTOOL) {
+			// Import from kobotool
+			const sanitized = removeFieldsWithUnderscore(results);
+			setRawData(sanitized);
+		}
+		setCurrentSource(value);
+	};
+
+	const handleExcelFileUpload = async (file) => {
+		if (!file) return alert("Please select file!");
+		const formData = new FormData();
+		formData.append("file", file);
+		const uploaded = await axios.post(
+			`${API_URL}/beneficiaries/upload`,
+			formData
+		);
+		const { data } = uploaded.data;
+		const sanitized = removeFieldsWithUnderscore(data);
+		setRawData(sanitized);
+	};
+
+	const handleTargetFieldChange = (sourceField, targetField) => {
+		const index = mappings.findIndex(
+			(item) => item.sourceField === sourceField
+		);
+		if (index !== -1) {
+			mappings[index] = { ...mappings[index], targetField };
+		} else {
+			setMappings([...mappings, { sourceField, targetField }]);
+		}
+	};
+
+	const handleCreateSource = (e) => {
 		e.preventDefault();
-		let finalPayload = removeFieldsWithUnderscore(excelData);
+		let finalPayload = rawData;
 		const selectedTargets = []; // Only submit selected target fields
-
-		console.log("F==>", finalPayload);
 
 		for (let m of mappings) {
 			if (m.targetField === TARGET_FIELD.FIRSTNAME) {
@@ -79,13 +115,11 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				finalPayload = replaced;
 			}
 		}
-		console.log("Final=>", finalPayload);
 		return importToSource(finalPayload, selectedTargets);
 	};
 
 	const importToSource = async (payload, selectedTargets) => {
 		try {
-			// const omitID = selectedTargets.filter((f) => f !== UNIQUE_ID);
 			if (!selectedTargets.length) return alert("Please select target fields!");
 			// Remove non-selected fields
 			console.log("Paylaod==>", payload);
@@ -94,11 +128,11 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 				selectedTargets
 			);
 			// Attach raw data
-			const final_mapping = attachedRawData(selectedFieldsOnly, excelData);
+			const final_mapping = attachedRawData(selectedFieldsOnly, rawData);
 			console.log("final_mapping=>", final_mapping);
 			// Validate payload against backend
 			const sourcePayload = {
-				name: IMPORT_SOURCE.KOBOTOOL,
+				name: currenSource,
 				details: { message: "This is just a test" },
 				field_mapping: { data: final_mapping },
 			};
@@ -111,123 +145,110 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 		}
 	};
 
-	const handleTargetFieldChange = (sourceField, targetField) => {
-		const index = mappings.findIndex(
-			(item) => item.sourceField === sourceField
-		);
-		if (index !== -1) {
-			mappings[index] = { ...mappings[index], targetField };
-		} else {
-			setMappings([...mappings, { sourceField, targetField }]);
-		}
+	const handleHomeClick = () => {
+		setRawData([]);
+		setCurrentScreen(SCREENS.IMPORT_SOURCE);
 	};
-
-	const handleExcelFileUpload = async (file) => {
-		if (!file) return alert("Please select file!");
-		const formData = new FormData();
-		formData.append("file", file);
-		const uploaded = await axios.post(
-			`${API_URL}/beneficiaries/upload`,
-			formData
-		);
-		const { data } = uploaded.data;
-		setExcelData(data);
-	};
-
-	console.log("mappings=>", mappings);
 
 	return (
-		<div>
-			{currentScreen === SCREENS.IMPORT_BENEF && <ImportBenef />}
-			{currentScreen === SCREENS.HOME && (
-				<>
-					<h3>Beneficiary List</h3>
-					<hr />
-					<ExcelUploader onFileUpload={handleExcelFileUpload} />
-					<table>
-						{excelData.map((item, index) => {
-							const keys = Object.keys(item);
-
-							return (
-								<Fragment key={index}>
-									<tbody>
-										{index === 0 && (
-											<tr>
-												{keys.map((key, i) => {
-													return (
-														<td key={i + 1}>
-															<strong>{key.toLocaleUpperCase()}</strong> <br />
-															<select
-																name="targetField"
-																id="targetField"
-																onChange={(e) =>
-																	handleTargetFieldChange(key, e.target.value)
-																}
-															>
-																<option value="None">--Choose Target--</option>
-																{BENEF_DB_FIELDS.map((f) => {
-																	return (
-																		<option key={f} value={f}>
-																			{f}
-																		</option>
-																	);
-																})}
-															</select>
-														</td>
-													);
-												})}
-											</tr>
-										)}
-
-										<tr>
-											{/* Render key:value */}
-											{keys.map((key, i) => (
-												<td key={i + 1}>
-													{typeof item[key] === "object" ? (
-														// Render nested objects
-														<NestedObjectRenderer object={item[key]} />
-													) : (
-														// Render simple values
-														item[key]
-													)}
-												</td>
-											))}
-										</tr>
-									</tbody>
-								</Fragment>
-							);
-						})}
-					</table>
-					<br />
-					<button style={{ padding: 10 }} type="button" onClick={handleSubmit}>
-						Create Source
-					</button>{" "}
-					&nbsp;
-				</>
+		<>
+			{currentScreen === SCREENS.IMPORT_BENEF && (
+				<ImportBenef handleHomeClick={handleHomeClick} />
 			)}
-		</div>
+			{currentScreen === SCREENS.IMPORT_SOURCE && (
+				<Fragment>
+					<div style={{ padding: 20, marginLeft: "40%" }}>
+						<SelectDropdown handleSelectChange={handleSelectChange} />
+						<div>
+							{currenSource === IMPORT_OPTIONS.EXCEL && (
+								<ExcelUploader onFileUpload={handleExcelFileUpload} />
+							)}
+						</div>
+					</div>
+					<hr />
+					<div>
+						{currenSource ? (
+							<button
+								style={{ padding: 10, margin: 20 }}
+								type="button"
+								onClick={handleCreateSource}
+							>
+								Create Source
+							</button>
+						) : (
+							<p style={{ margin: 10 }}>Please select import source!</p>
+						)}
+
+						<a
+							style={{ padding: 10, margin: 20 }}
+							href="#sources"
+							onClick={() => setCurrentScreen(SCREENS.IMPORT_BENEF)}
+						>
+							[View Sources]
+						</a>
+
+						<table>
+							{rawData.map((item, index) => {
+								const keys = Object.keys(item);
+
+								return (
+									<Fragment key={index}>
+										<tbody>
+											{index === 0 && (
+												<tr>
+													{keys.map((key, i) => {
+														return (
+															<td key={i + 1}>
+																<strong>{key.toLocaleUpperCase()}</strong>{" "}
+																<br />
+																<select
+																	name="targetField"
+																	id="targetField"
+																	onChange={(e) =>
+																		handleTargetFieldChange(key, e.target.value)
+																	}
+																>
+																	<option value="None">
+																		--Choose Target--
+																	</option>
+																	{BENEF_DB_FIELDS.map((f) => {
+																		return (
+																			<option key={f} value={f}>
+																				{f}
+																			</option>
+																		);
+																	})}
+																</select>
+															</td>
+														);
+													})}
+												</tr>
+											)}
+
+											<tr>
+												{/* Render key:value */}
+												{keys.map((key, i) => (
+													<td key={i + 1}>
+														{typeof item[key] === "object" ? (
+															// Render nested objects
+															<NestedObjectRenderer object={item[key]} />
+														) : (
+															// Render simple values
+															item[key]
+														)}
+													</td>
+												))}
+											</tr>
+										</tbody>
+									</Fragment>
+								);
+							})}
+						</table>
+					</div>
+				</Fragment>
+			)}
+		</>
 	);
 };
 
-const NestedObjectRenderer = ({ object }) => {
-	const keys = Object.keys(object);
-	return (
-		<ul>
-			{keys.map((key, i) => (
-				<li key={i}>
-					<strong>{key}:</strong> {object[key]}
-				</li>
-			))}
-		</ul>
-	);
-};
-
-const MyComponent = () => {
-	const [benefList, setBenefList] = useState(results);
-
-	const myArray = removeFieldsWithUnderscore(benefList);
-
-	return <DynamicArrayRenderer dataArray={myArray} />;
-};
-
-export default MyComponent;
+export default App;

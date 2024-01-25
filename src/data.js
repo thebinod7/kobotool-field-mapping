@@ -131,11 +131,6 @@ export const BENEF_DB_FIELDS = [
 	TARGET_FIELD.LONGITUDE,
 ];
 
-export const IMPORT_SOURCE = {
-	KOBOTOOL: "Kobotool",
-	EXCEL: "Excel",
-};
-
 export const FORM_FIELDS = [
 	{
 		id: 1,
@@ -202,3 +197,8 @@ export const FORM_FIELDS = [
 		is_active: true,
 	},
 ];
+
+export const IMPORT_OPTIONS = {
+	KOBOTOOL: "Kobotool",
+	EXCEL: "Excel",
+};

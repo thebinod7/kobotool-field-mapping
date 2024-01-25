@@ -9,7 +9,7 @@ const ExcelUploader = ({ onFileUpload }) => {
 	};
 
 	return (
-		<div>
+		<div style={{ margin: "15px 60px" }}>
 			<input
 				type="file"
 				onChange={handleFileChange}
@@ -17,7 +17,7 @@ const ExcelUploader = ({ onFileUpload }) => {
 				ref={fileInputRef}
 			/>
 			<button
-				style={{ padding: 10 }}
+				style={{ padding: 5 }}
 				type="button"
 				onClick={() => fileInputRef.current.click()}
 			>

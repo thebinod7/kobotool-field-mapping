@@ -3,11 +3,10 @@ import React, { useEffect, useState } from "react";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-function ImportBenef() {
+function ImportBenef({ handleHomeClick }) {
 	const [sources, setSources] = useState([]);
 
 	const handleImortClick = async (uuid) => {
-		console.log({ uuid });
 		try {
 			const res = await axios.get(
 				`${API_URL}/beneficiary-imports/${uuid}/import`
@@ -31,6 +30,9 @@ function ImportBenef() {
 	return (
 		<div style={{ margin: 20, padding: 20 }}>
 			<h3>Beneficiary Source List</h3>
+			<a onClick={(e) => handleHomeClick()} href="#home">
+				[Go Home]
+			</a>
 			<table>
 				<thead>
 					<th>Source</th>
