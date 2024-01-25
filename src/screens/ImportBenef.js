@@ -50,12 +50,16 @@ function ImportBenef({ handleHomeClick }) {
 									<td>{d.created_at}</td>
 									<td>{d.field_mapping.data.length}</td>
 									<td>
-										<button
-											type="button"
-											onClick={() => handleImortClick(d.uuid)}
-										>
-											Import Beneficiary
-										</button>
+										{d.isImported ? (
+											"Imported!"
+										) : (
+											<button
+												type="button"
+												onClick={() => handleImortClick(d.uuid)}
+											>
+												Import Beneficiary
+											</button>
+										)}
 									</td>
 								</tr>
 							);

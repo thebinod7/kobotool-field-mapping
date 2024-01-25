@@ -115,6 +115,7 @@ const App = () => {
 				finalPayload = replaced;
 			}
 		}
+		console.log("FinalPayload", finalPayload);
 		return importToSource(finalPayload, selectedTargets);
 	};
 

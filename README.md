@@ -1,3 +1,3 @@
-# Kobotool Field Mapping
+# Beneficiary Import Tool
 
-Map fields from Kobotool form to own database schema followed by data import.
+Import beneficiaries from excel and kobotool
