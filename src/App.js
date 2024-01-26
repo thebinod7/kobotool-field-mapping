@@ -34,11 +34,14 @@ const App = () => {
 	const [mappings, setMappings] = useState([]);
 	const [currentScreen, setCurrentScreen] = useState(SCREENS.IMPORT_SOURCE);
 
+	function fetchDataFromKobotool() {}
+
 	const handleSelectChange = (e) => {
 		setRawData([]);
 		const { value } = e.target;
 		if (value === IMPORT_OPTIONS.KOBOTOOL) {
 			// Import from kobotool
+			const d = fetchDataFromKobotool();
 			const sanitized = removeFieldsWithUnderscore(results);
 			setRawData(sanitized);
 		}
