@@ -115,6 +115,9 @@ export const TARGET_FIELD = {
 	NOTES: "notes",
 	LATITUDE: "latitude",
 	LONGITUDE: "longitude",
+	PHONE_STATUS: "phoneStatus",
+	BANKED_STATUS: "bankedStatus",
+	INTERNET_STATUS: "internetStatus",
 };
 
 export const BENEF_DB_FIELDS = [
@@ -129,6 +132,9 @@ export const BENEF_DB_FIELDS = [
 	TARGET_FIELD.NOTES,
 	TARGET_FIELD.LATITUDE,
 	TARGET_FIELD.LONGITUDE,
+	TARGET_FIELD.PHONE_STATUS,
+	TARGET_FIELD.BANKED_STATUS,
+	TARGET_FIELD.INTERNET_STATUS,
 ];
 
 export const FORM_FIELDS = [

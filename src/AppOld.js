@@ -100,7 +100,7 @@ const DynamicArrayRenderer = ({ dataArray }) => {
 			const sourcePayload = {
 				name: IMPORT_OPTIONS.KOBOTOOL,
 				details: { message: "This is just a test" },
-				field_mapping: { data: final_mapping },
+				fieldMapping: { data: final_mapping },
 			};
 			await axios.post(`${API_URL}/sources`, sourcePayload);
 			setCurrentScreen(SCREENS.IMPORT_BENEF);

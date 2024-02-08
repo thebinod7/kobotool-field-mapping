@@ -48,7 +48,7 @@ function ImportBenef({ handleHomeClick }) {
 								<tr key={d.id}>
 									<td>{d.name}</td>
 									<td>{d.created_at}</td>
-									<td>{d.field_mapping.data.length}</td>
+									<td>{d.fieldMapping.data.length}</td>
 									<td>
 										{d.isImported ? (
 											"Imported!"
