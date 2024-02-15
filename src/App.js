@@ -39,12 +39,15 @@ const App = () => {
     const { value } = e.target;
     if (value === IMPORT_OPTIONS.KOBOTOOL) {
       // Import from kobotool
-      const response = await axios.get(`${API_URL}/app/getDataFromKobo`);
-
-      console.log("d", response);
-      const responseData = response?.data?.data?.results;
-      const sanitized = removeFieldsWithUnderscore(responseData);
-      setRawData(sanitized);
+      const h = prompt("Please Enter the name you want to access the Kobotool");
+      console.log(h);
+      if (h) {
+        const response = await axios.get(`${API_URL}/app/getDataFromKobo/${h}`);
+        console.log("d", response);
+        const responseData = response?.data?.data?.results;
+        const sanitized = removeFieldsWithUnderscore(responseData);
+        setRawData(sanitized);
+      }
     }
     setCurrentSource(value);
   };
