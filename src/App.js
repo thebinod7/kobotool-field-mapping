@@ -18,6 +18,7 @@ import ImportBenef from "./screens/ImportBenef";
 import ExcelUploader from "./components/ExcelUploader";
 import SelectDropdown from "./components/SelectDropdown";
 import NestedObjectRenderer from "./components/NestedObjectRenderer";
+import SelectKoboForm from "./components/SelectKoboForm";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -26,25 +27,33 @@ const SCREENS = {
 	IMPORT_BENEF: "Import Beneficiary",
 };
 
-const { results } = KOBO_DATA;
-
 const App = () => {
 	const [currenSource, setCurrentSource] = useState("");
 	const [rawData, setRawData] = useState([]);
-	const [mappings, setMappings] = useState([]);
+	const [mappings, setMappings] = useState([]); // [{sourceField, targetField}]
 	const [currentScreen, setCurrentScreen] = useState(SCREENS.IMPORT_SOURCE);
+	const [fetching, setFetching] = useState(false);
+	const [koboForms, setKoboForms] = useState([]);
+
+	const handleKoboFormChange = async (e) => {
+		try {
+			const { value } = e.target;
+			if (!value) return alert("Please select kobo form!");
+			setFetching(true);
+			const response = await axios.get(`${API_URL}/app/kobo-import/${value}`);
+			const responseData = response?.data?.data?.results || [];
+			const sanitized = removeFieldsWithUnderscore(responseData);
+			setRawData(sanitized);
+			setFetching(false);
+		} catch (err) {}
+	};
 
 	const handleSelectChange = async (e) => {
 		setRawData([]);
 		const { value } = e.target;
 		if (value === IMPORT_OPTIONS.KOBOTOOL) {
-			// Import from kobotool
-			const response = await axios.get(`${API_URL}/app/getDataFromKobo`);
-
-			console.log("d", response);
-			const responseData = response?.data?.data?.results;
-			const sanitized = removeFieldsWithUnderscore(responseData);
-			setRawData(sanitized);
+			const d = await axios.get(`${API_URL}/app/settings/${value}`);
+			setKoboForms(d.data.data);
 		}
 		setCurrentSource(value);
 	};
@@ -120,14 +129,13 @@ const App = () => {
 			}
 		}
 		console.log("FinalPayload", finalPayload);
-		return importToSource(finalPayload, selectedTargets);
+		// return importToSource(finalPayload, selectedTargets);
 	};
 
 	const importToSource = async (payload, selectedTargets) => {
 		try {
 			if (!selectedTargets.length) return alert("Please select target fields!");
 			// Remove non-selected fields
-			console.log("Paylaod==>", payload);
 			const selectedFieldsOnly = includeOnlySelectedTarget(
 				payload,
 				selectedTargets
@@ -164,6 +172,12 @@ const App = () => {
 				<Fragment>
 					<div style={{ padding: 20, marginLeft: "40%" }}>
 						<SelectDropdown handleSelectChange={handleSelectChange} />
+						{koboForms.length > 0 && (
+							<SelectKoboForm
+								options={koboForms}
+								handleKoboFormChange={handleKoboFormChange}
+							/>
+						)}
 						<div>
 							{currenSource === IMPORT_OPTIONS.EXCEL && (
 								<ExcelUploader onFileUpload={handleExcelFileUpload} />
@@ -191,6 +205,10 @@ const App = () => {
 						>
 							[View Sources]
 						</a>
+
+						{fetching && (
+							<p style={{ margin: 20 }}>Fetching Beneficiaries...</p>
+						)}
 
 						<table>
 							{rawData.map((item, index) => {
