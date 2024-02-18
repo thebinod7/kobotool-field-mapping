@@ -30,15 +30,22 @@ const App = () => {
 	const [fetching, setFetching] = useState(false);
 	const [koboForms, setKoboForms] = useState([]);
 	const [importId, setImportId] = useState(null); // Kobo form id
+	const [existingMappings, setExistingMappings] = useState([]);
+
+	console.log("ExistingMappings", existingMappings);
 
 	const handleKoboFormChange = async (e) => {
 		try {
 			setRawData([]);
+			setExistingMappings([]);
 			const { value } = e.target;
 			if (!value) return alert("Please select kobo form!");
 			setFetching(true);
 			const found = koboForms.find((f) => f.name === value);
-			setImportId(found.formId);
+			const formId = found.formId || "";
+			setImportId(formId);
+			const d = await axios.get(`${API_URL}/sources/${formId}/mappings`);
+			if (d.data.data.length) setExistingMappings(d.data.data);
 			const response = await axios.get(`${API_URL}/app/kobo-import/${value}`);
 			const responseData = response?.data?.data?.results || [];
 			const sanitized = removeFieldsWithUnderscore(responseData);
@@ -88,9 +95,9 @@ const App = () => {
 		let finalPayload = rawData;
 		const selectedTargets = []; // Only submit selected target fields
 
-		// Check if mappings already exist?
+		const myMappings = existingMappings.length ? existingMappings : mappings;
 
-		for (let m of mappings) {
+		for (let m of myMappings) {
 			if (m.targetField === TARGET_FIELD.FIRSTNAME) {
 				selectedTargets.push(TARGET_FIELD.FIRSTNAME);
 				const replaced = finalPayload.map((item) => {
@@ -145,7 +152,6 @@ const App = () => {
 			);
 			// Attach raw data
 			const final_mapping = attachedRawData(selectedFieldsOnly, rawData);
-			console.log("final_mapping=>", final_mapping);
 			// Validate payload against backend
 			const sourcePayload = {
 				name: currenSource,
@@ -153,10 +159,9 @@ const App = () => {
 				details: { message: "This is default message" },
 				fieldMapping: { data: final_mapping, sourceTargetMappings: mappings },
 			};
-			console.log("SourcePayload=>", sourcePayload);
 			await axios.post(`${API_URL}/sources`, sourcePayload);
-			setCurrentScreen(SCREENS.IMPORT_BENEF);
-			alert("Imported to source!");
+			// setCurrentScreen(SCREENS.IMPORT_BENEF);
+			alert("Beneficiaries added to the import Queue!");
 		} catch (err) {
 			console.log("ERR==>", err);
 			alert("Internal server error!");
@@ -205,6 +210,12 @@ const App = () => {
 							>
 								Create Source
 							</button>
+						)}
+
+						{existingMappings.length > 0 && (
+							<span>
+								Fields are already mapped. You can create source right now!
+							</span>
 						)}
 
 						<a
