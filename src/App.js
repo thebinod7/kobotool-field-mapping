@@ -1,12 +1,7 @@
 import React, { Fragment, useState } from "react";
 import axios from "axios";
 
-import {
-	KOBO_DATA,
-	TARGET_FIELD,
-	BENEF_DB_FIELDS,
-	IMPORT_OPTIONS,
-} from "./data";
+import { TARGET_FIELD, BENEF_DB_FIELDS, IMPORT_OPTIONS } from "./data";
 import {
 	attachedRawData,
 	includeOnlySelectedTarget,
@@ -34,25 +29,31 @@ const App = () => {
 	const [currentScreen, setCurrentScreen] = useState(SCREENS.IMPORT_SOURCE);
 	const [fetching, setFetching] = useState(false);
 	const [koboForms, setKoboForms] = useState([]);
+	const [importId, setImportId] = useState(null); // Kobo form id
 
 	const handleKoboFormChange = async (e) => {
 		try {
+			setRawData([]);
 			const { value } = e.target;
 			if (!value) return alert("Please select kobo form!");
 			setFetching(true);
+			const found = koboForms.find((f) => f.name === value);
+			setImportId(found.formId);
 			const response = await axios.get(`${API_URL}/app/kobo-import/${value}`);
 			const responseData = response?.data?.data?.results || [];
 			const sanitized = removeFieldsWithUnderscore(responseData);
 			setRawData(sanitized);
 			setFetching(false);
-		} catch (err) {}
+		} catch (err) {
+			setFetching(false);
+		}
 	};
 
 	const handleSelectChange = async (e) => {
 		setRawData([]);
 		const { value } = e.target;
 		if (value === IMPORT_OPTIONS.KOBOTOOL) {
-			const d = await axios.get(`${API_URL}/app/settings/${value}`);
+			const d = await axios.get(`${API_URL}/app/settings/kobotool`);
 			setKoboForms(d.data.data);
 		}
 		setCurrentSource(value);
@@ -86,6 +87,8 @@ const App = () => {
 		e.preventDefault();
 		let finalPayload = rawData;
 		const selectedTargets = []; // Only submit selected target fields
+
+		// Check if mappings already exist?
 
 		for (let m of mappings) {
 			if (m.targetField === TARGET_FIELD.FIRSTNAME) {
@@ -129,7 +132,7 @@ const App = () => {
 			}
 		}
 		console.log("FinalPayload", finalPayload);
-		// return importToSource(finalPayload, selectedTargets);
+		return importToSource(finalPayload, selectedTargets);
 	};
 
 	const importToSource = async (payload, selectedTargets) => {
@@ -146,9 +149,11 @@ const App = () => {
 			// Validate payload against backend
 			const sourcePayload = {
 				name: currenSource,
-				details: { message: "This is just a test" },
-				fieldMapping: { data: final_mapping },
+				importId,
+				details: { message: "This is default message" },
+				fieldMapping: { data: final_mapping, sourceTargetMappings: mappings },
 			};
+			console.log("SourcePayload=>", sourcePayload);
 			await axios.post(`${API_URL}/sources`, sourcePayload);
 			setCurrentScreen(SCREENS.IMPORT_BENEF);
 			alert("Imported to source!");
@@ -172,11 +177,17 @@ const App = () => {
 				<Fragment>
 					<div style={{ padding: 20, marginLeft: "40%" }}>
 						<SelectDropdown handleSelectChange={handleSelectChange} />
-						{koboForms.length > 0 && (
+						<br />
+						{koboForms.length > 0 ? (
 							<SelectKoboForm
 								options={koboForms}
 								handleKoboFormChange={handleKoboFormChange}
 							/>
+						) : (
+							<i>
+								{currenSource === IMPORT_OPTIONS.KOBOTOOL &&
+									"Create a Kobotool form settings!"}
+							</i>
 						)}
 						<div>
 							{currenSource === IMPORT_OPTIONS.EXCEL && (
@@ -186,7 +197,7 @@ const App = () => {
 					</div>
 					<hr />
 					<div>
-						{currenSource ? (
+						{currenSource && (
 							<button
 								style={{ padding: 10, margin: 20 }}
 								type="button"
@@ -194,8 +205,6 @@ const App = () => {
 							>
 								Create Source
 							</button>
-						) : (
-							<p style={{ margin: 10 }}>Please select import source!</p>
 						)}
 
 						<a
