@@ -100,7 +100,12 @@ const App = () => {
     formData.append("file", file);
     const uploaded = await axios.post(
       `${API_URL}/beneficiaries/upload`,
-      formData
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      }
     );
     const { workbookData, sheetId } = uploaded.data?.data;
     setImportId(sheetId);
